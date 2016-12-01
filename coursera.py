@@ -8,16 +8,16 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 from bs4 import BeautifulSoup
-from dateutil.parser import *
+from dateutil.parser import parse
 
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Font
 
-import re
+from re import findall
 
 
 class Constants:
-    XML_FEED = "https://www.coursera.org/sitemap~www~courses.xml"
+    xml_feed = "https://www.coursera.org/sitemap~www~courses.xml"
     courses_urls = []
     key_names = ['Name', 'Language', 'Rating', 'Starts on', 'Duration (in weeks)']
     class_names = ['.title', '.language-info', '.ratings-text']
@@ -29,7 +29,7 @@ class Constants:
 def get_courses_list(amount=20, url_tag='loc'):
 
     try:
-        xml_doc = minidom.parseString(get(Constants.XML_FEED).content)
+        xml_doc = minidom.parseString(get(Constants.xml_feed).content)
         location_list = xml_doc.getElementsByTagName(url_tag)
         shuffle(location_list)
 
@@ -83,7 +83,7 @@ def parse_course(html):
 
     try:
         js_chunk = soup.find('script', type="application/ld+json").contents[0].strip()
-        dates = re.findall("\d{4}-\d{2}-\d{2}", js_chunk)
+        dates = findall("\d{4}-\d{2}-\d{2}", js_chunk)
     except:
         course.extend(['Date unknown', 'Duration unknown'])
     else:

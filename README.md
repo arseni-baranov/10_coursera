@@ -14,7 +14,7 @@ http://phantomjs.org/download
 
 и запустить скрипт:
 ```
-python3 coursera.py
+python coursera.py
 ```
 
 Необходимо учесть, что парсинг страниц занимает определённое время (в среднем 5-10 мин)

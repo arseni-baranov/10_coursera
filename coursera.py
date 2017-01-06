@@ -13,8 +13,8 @@ XLS_TITLEFONT = Font(size=11, bold=True, color='000000')
 
 def get_random_courses(amount=20):
     base_url = 'https://www.coursera.org/sitemap~www~courses.xml'
-    data = requests.get(base_url)
-    root = etree.fromstring(data.content)
+    html_data = requests.get(base_url)
+    root = etree.fromstring(html_data.content)
     name_spaces = {'urls': 'http://www.sitemaps.org/schemas/sitemap/0.9'}
     urls_obj_list = root.xpath("//urls:loc", namespaces=name_spaces)
     all_urls_list = [url.text for url in urls_obj_list]

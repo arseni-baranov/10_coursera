@@ -1,6 +1,7 @@
 import requests
 import json
 import random
+import argparse
 from bs4 import BeautifulSoup
 from lxml import etree
 from openpyxl import Workbook
@@ -11,6 +12,15 @@ XLS_HEADERFILL = PatternFill(start_color='E1E4D2', end_color='E1E4D2', fill_type
 XLS_TITLEFONT = Font(size=11, bold=True, color='000000')
 
 
+def get_console_arguments():
+    parser = argparse.ArgumentParser(description='Gets random courses from coursera and outputs them to xlsx')
+    parser.add_argument('--s', '--save_as', dest='save_as', default='result.xlsx',
+                        help='save the output file as... (default: result.xlsx)')
+
+    args = parser.parse_args()
+    return args
+
+
 def get_random_courses(amount=20):
     base_url = 'https://www.coursera.org/sitemap~www~courses.xml'
     html_data = requests.get(base_url)
@@ -18,8 +28,8 @@ def get_random_courses(amount=20):
     name_spaces = {'urls': 'http://www.sitemaps.org/schemas/sitemap/0.9'}
     urls_obj_list = root.xpath("//urls:loc", namespaces=name_spaces)
     all_urls_list = [url.text for url in urls_obj_list]
-    random_20_urls = random.sample(all_urls_list, amount)
-    return random_20_urls
+    random_urls = random.sample(all_urls_list, amount)
+    return random_urls
 
 
 def get_page(url):
@@ -41,7 +51,7 @@ def get_course_language(soup):
             language_index = row_info.index('Language') + 1
             language = row_info[language_index]
         except ValueError:
-            language = 'unknown'
+            language = None
         return language
 
 
@@ -81,7 +91,7 @@ def get_course_data(course_slug):
             'url': course_slug}
 
 
-def output_courses_xlsx(all_courses_info, xls_output):
+def compile_workbook(all_courses_info):
     wb = Workbook()
     sheet = wb.active
     sheet.append(['Title', 'Start date', 'Rating',
@@ -93,20 +103,29 @@ def output_courses_xlsx(all_courses_info, xls_output):
             cell.font = XLS_TITLEFONT
 
     for course in all_courses_info:
+        if course['language'] is None:
+            course['language'] = 'Unknown'
+        elif course['rating'] is None:
+            course['rating'] = 'Unknown'
+
         course_info = [course['title'], course['startdate'], course['rating'],
                        course['duration'], course['language'], course['url']]
         sheet.append(course_info)
-    wb.save(xls_output)
+
+    return wb
+
+
+def write_excel(courses_workbook, output_file):
+    courses_workbook.save(output_file)
 
 
 def main():
-    xls_output = input('Enter filename to save the xls file: ')
-    all_courses_info = []
-    urls_list = get_random_courses()
-    for url in urls_list:
-        course_info = get_course_data(url)
-        all_courses_info.append(course_info)
-    output_courses_xlsx(all_courses_info, xls_output)
+    args = get_console_arguments()
+    output_file = args.save_as
+    all_courses_info = [get_course_data(url) for url in get_random_courses()]
+    courses_workbook = compile_workbook(all_courses_info)
+    write_excel(courses_workbook, output_file)
+
     print('the file has been successfully saved')
 
 
